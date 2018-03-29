@@ -27,3 +27,74 @@ Performs RFID tag authentication and returns boolean wether authentication succe
 ```
 
 Client must expose `transceive(data: string): string` method which is used to exchange data with the tag. Input and output data is hex encoded string.
+
+#### Example authentication (as seen from the client)
+
+```json
+Sent:
+{
+    "jsonrpc":"2.0",
+    "id":73,
+    "method":"auth",
+    "params": [
+        {
+            "ATQA":[3,68],
+            "ATS":"7577810280",
+            "SAK":32,
+            "UID":"047681BA703A80"
+        }
+    ]
+}
+
+Received:
+{
+    "jsonrpc":"2.0",
+    "id":221,
+    "method":"transceive",
+    "params":["00a4040007d276000085010000"]
+}
+
+Sent:
+{
+    "jsonrpc":"2.0",
+    "id":221,
+    "result":"9000"
+}
+
+Received:
+{
+    "jsonrpc":"2.0",
+    "id":222,
+    "method":"transceive",
+    "params":["90aa0000010000"]
+}
+
+Sent:
+{
+    "jsonrpc":"2.0",
+    "id":222,
+    "result":"53233522C3A15A39E6EA1AF139EFD2D691AF"
+}
+
+Received:
+{
+    "jsonrpc":"2.0",
+    "id":223,
+    "method":"transceive",
+    "params":["90af000020dc5b7b348325b8b7b4284c0f7c3a98ecb31da51e25c566e8539bf32a00f1e8a800"]
+}
+
+Sent:
+{
+    "jsonrpc":"2.0",
+    "id":223,
+    "result":"9DBD38660C49CC852EE4EF427C9886B399100"
+}
+
+Received:
+{
+    "jsonrpc":"2.0",
+    "id":73,
+    "result":true
+}
+```
