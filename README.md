@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/chemicstry/eacs-tag-auth.svg?branch=master)](https://travis-ci.org/chemicstry/eacs-tag-auth)
+[![Coverage Status](https://coveralls.io/repos/github/chemicstry/eacs-tag-auth/badge.svg?branch=master)](https://coveralls.io/github/chemicstry/eacs-tag-auth?branch=master)
 
 # eacs-tag-auth
 Extensible Access Control System. RFID Tag Authentication Module.
