@@ -6,13 +6,13 @@ Extensible Access Control System. RFID Tag Authentication Module.
 
 This module provides a RFID tag authentication service over JSON-RPC protocol via websocket.
 
-# Supported tags
+## Supported tags
 
 - Mifare Desfire EV1 (AES, 2K3DES, 3K3DES keys)
 
-# API
+## API
 
-## `auth(taginfo: object): boolean`
+### `auth(taginfo: object): boolean`
 
 Performs RFID tag authentication and returns boolean wether authentication succeeded.
 
