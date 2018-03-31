@@ -12,7 +12,7 @@ interface TagInfo
 // Function used to transceive raw data with tag
 type TagTransceiveFn = (data: Buffer) => Promise<Buffer>;
 
-class Tag
+abstract class Tag
 {
     info: TagInfo;
     Transceive: TagTransceiveFn;
@@ -23,10 +23,11 @@ class Tag
         this.Transceive = transceiveFn;
     }
 
-    async Authenticate(keyProvider: KeyProvider): Promise<boolean>
-    {
-        return false;
-    }
+    // Authenticates with the key from KeyProvider
+    abstract async Authenticate(keyProvider: KeyProvider): Promise<boolean>;
+
+    // Initializes blank kard with a key from KeyProvider
+    abstract async InitializeKey(keyProvider: KeyProvider): Promise<boolean>;
 
     // returns true if taginfo matches the specific card type
     static Identify(info: TagInfo): boolean
@@ -35,8 +36,14 @@ class Tag
     }
 }
 
+type TagConstructor = {
+    new (info: TagInfo, transceiveFn: TagTransceiveFn): Tag;
+    Identify(info: TagInfo): boolean;
+}
+
 export {
-    Tag,
     TagInfo,
-    TagTransceiveFn
+    TagTransceiveFn,
+    Tag,
+    TagConstructor
 };

@@ -13,7 +13,7 @@ declare class HKDF implements KeyProvider {
     hashalgo: string;
     hashlen: number;
     salt: Buffer;
-    constructor(IKM: Buffer, hashalgo: string, salt: Buffer);
+    constructor(IKM: Buffer, hashalgo: string, salt?: Buffer);
     Zeros(len: number): Buffer;
     Extract(): Buffer;
     Expand(info: Buffer, size: number): Buffer;

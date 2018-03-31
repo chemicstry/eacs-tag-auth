@@ -1,8 +1,8 @@
-import { Tag, TagInfo } from './Tag';
+import { TagInfo, TagConstructor } from './Tag';
 declare class TagFactory {
-    static Tags: typeof Tag[];
-    static Identify(info: TagInfo): typeof Tag;
-    static Register(classname: typeof Tag): void;
+    static Tags: TagConstructor[];
+    static Identify(info: TagInfo): TagConstructor;
+    static Register(classname: TagConstructor): void;
     static InitializeTypes(): void;
 }
 export { TagFactory };

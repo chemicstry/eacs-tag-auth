@@ -238,7 +238,8 @@ class DesfireTag extends Tag
         return true;
     }
 
-    async Authenticate(keyProvider: KeyProvider): Promise<boolean>
+    // Creates OtherInfo object used as a key diversification material
+    CreateOtherInfo(): Buffer
     {
         // Use TagInfo as diversification input (ugly conversion in JS)
         let OtherInfo = Buffer.alloc(2 + 1 + this.info.UID.length + this.info.ATS.length);
@@ -247,27 +248,42 @@ class DesfireTag extends Tag
         OtherInfo.writeUInt8(this.info.SAK, 2);
         this.info.UID.copy(OtherInfo, 4);
         this.info.ATS.copy(OtherInfo, 4 + this.info.UID.length);
+        return OtherInfo;
+    }
+
+    async Authenticate(keyProvider: KeyProvider): Promise<boolean>
+    {
+        // Diversification material
+        let OtherInfo = this.CreateOtherInfo();
 
         // Get 16 byte key (AES128) from keyProvider
         let key = new DesfireKeyAES(keyProvider.GetKey(16, OtherInfo));
         Log.debug("DesfireTag::Authenticate(): Generated key", {key: key.Get().toString('hex')});
 
         // Authenticate key 0
-        if (await this.DesfireAuthenticate(key, 0))
-            return true;
-        
+        return await this.DesfireAuthenticate(key, 0);
+    }
+
+    async InitializeKey(keyProvider: KeyProvider): Promise<boolean>
+    {
+        // Diversification material
+        let OtherInfo = this.CreateOtherInfo();
+
+        // Get 16 byte key (AES128) from keyProvider
+        let key = new DesfireKeyAES(keyProvider.GetKey(16, OtherInfo));
+        Log.debug("DesfireTag::Authenticate(): Generated key", {key: key.Get().toString('hex')});
+
         // Try authenticating with default key and change it
         Log.debug("DesfireTag::Authenticate(): Trying to change default key");
 
-        const defaultkey =  new DesfireKey2K3DESDefault();
+        const defaultkey = new DesfireKey2K3DESDefault();
 
+        // Authenticate with default key
         if (!await this.DesfireAuthenticate(defaultkey, 0))
             return false;
 
-        if (!await this.ChangeKey(0, key))
-            return false;
-
-        return true;
+        // Change key
+        return await this.ChangeKey(0, key);
     }
 
     static DesfireCRC(crc: number, value: number): number

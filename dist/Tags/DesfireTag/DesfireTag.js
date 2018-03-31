@@ -201,29 +201,43 @@ class DesfireTag extends Tag_1.Tag {
             return true;
         });
     }
+    // Creates OtherInfo object used as a key diversification material
+    CreateOtherInfo() {
+        // Use TagInfo as diversification input (ugly conversion in JS)
+        let OtherInfo = Buffer.alloc(2 + 1 + this.info.UID.length + this.info.ATS.length);
+        OtherInfo.writeUInt8(this.info.ATQA[0], 0);
+        OtherInfo.writeUInt8(this.info.ATQA[1], 1);
+        OtherInfo.writeUInt8(this.info.SAK, 2);
+        this.info.UID.copy(OtherInfo, 4);
+        this.info.ATS.copy(OtherInfo, 4 + this.info.UID.length);
+        return OtherInfo;
+    }
     Authenticate(keyProvider) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Use TagInfo as diversification input (ugly conversion in JS)
-            let OtherInfo = Buffer.alloc(2 + 1 + this.info.UID.length + this.info.ATS.length);
-            OtherInfo.writeUInt8(this.info.ATQA[0], 0);
-            OtherInfo.writeUInt8(this.info.ATQA[1], 1);
-            OtherInfo.writeUInt8(this.info.SAK, 2);
-            this.info.UID.copy(OtherInfo, 4);
-            this.info.ATS.copy(OtherInfo, 4 + this.info.UID.length);
+            // Diversification material
+            let OtherInfo = this.CreateOtherInfo();
             // Get 16 byte key (AES128) from keyProvider
             let key = new DesfireKey_1.DesfireKeyAES(keyProvider.GetKey(16, OtherInfo));
             Log_1.Log.debug("DesfireTag::Authenticate(): Generated key", { key: key.Get().toString('hex') });
             // Authenticate key 0
-            if (yield this.DesfireAuthenticate(key, 0))
-                return true;
+            return yield this.DesfireAuthenticate(key, 0);
+        });
+    }
+    InitializeKey(keyProvider) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Diversification material
+            let OtherInfo = this.CreateOtherInfo();
+            // Get 16 byte key (AES128) from keyProvider
+            let key = new DesfireKey_1.DesfireKeyAES(keyProvider.GetKey(16, OtherInfo));
+            Log_1.Log.debug("DesfireTag::Authenticate(): Generated key", { key: key.Get().toString('hex') });
             // Try authenticating with default key and change it
             Log_1.Log.debug("DesfireTag::Authenticate(): Trying to change default key");
             const defaultkey = new DesfireKey_1.DesfireKey2K3DESDefault();
+            // Authenticate with default key
             if (!(yield this.DesfireAuthenticate(defaultkey, 0)))
                 return false;
-            if (!(yield this.ChangeKey(0, key)))
-                return false;
-            return true;
+            // Change key
+            return yield this.ChangeKey(0, key);
         });
     }
     static DesfireCRC(crc, value) {

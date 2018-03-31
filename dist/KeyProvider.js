@@ -17,7 +17,7 @@ class HKDF {
         this.IKM = IKM;
         // Hashing algorithm
         this.hashalgo = hashalgo;
-        // Hashing algorithm length
+        // Hashing algorithm length (in bytes)
         this.hashlen = crypto_1.createHash(this.hashalgo).digest().length;
         // Salt
         this.salt = salt || this.Zeros(this.hashlen);

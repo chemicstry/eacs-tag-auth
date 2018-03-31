@@ -30,7 +30,7 @@ class HKDF implements KeyProvider
     hashlen: number;
     salt: Buffer;
 
-    constructor(IKM: Buffer, hashalgo: string, salt: Buffer)
+    constructor(IKM: Buffer, hashalgo: string, salt?: Buffer)
     {
         // Initial keying material (master key)
         this.IKM = IKM;
@@ -38,7 +38,7 @@ class HKDF implements KeyProvider
         // Hashing algorithm
         this.hashalgo = hashalgo;
 
-        // Hashing algorithm length
+        // Hashing algorithm length (in bytes)
         this.hashlen = createHash(this.hashalgo).digest().length;
 
         // Salt

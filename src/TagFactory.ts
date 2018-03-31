@@ -1,4 +1,4 @@
-import { Tag, TagInfo } from './Tag';
+import { Tag, TagInfo, TagConstructor} from './Tag';
 import { Log } from './Log';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -6,9 +6,9 @@ import * as path from 'path';
 class TagFactory
 {
     // Holds all registered tag modules
-    static Tags: typeof Tag[] = [];
+    static Tags: TagConstructor[] = [];
 
-    static Identify(info: TagInfo): typeof Tag
+    static Identify(info: TagInfo): TagConstructor
     {
         for (let tag of TagFactory.Tags)
         {
@@ -19,7 +19,7 @@ class TagFactory
         throw new Error("Could not identify tag type");
     }
 
-    static Register(classname: typeof Tag): void
+    static Register(classname: TagConstructor): void
     {
         let name = classname.name;
 

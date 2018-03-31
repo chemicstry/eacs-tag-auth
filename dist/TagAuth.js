@@ -14,13 +14,17 @@ const Log_1 = require("./Log");
 var RPCErrors;
 (function (RPCErrors) {
     RPCErrors[RPCErrors["UNSUPPORTED_TAG_TYPE"] = 1] = "UNSUPPORTED_TAG_TYPE";
-    RPCErrors[RPCErrors["ERROR_AUTHENTICATING"] = 2] = "ERROR_AUTHENTICATING";
+    RPCErrors[RPCErrors["AUTHENTICATE_FAILED"] = 2] = "AUTHENTICATE_FAILED";
+    RPCErrors[RPCErrors["INITIALIZE_KEY_FAILED"] = 3] = "INITIALIZE_KEY_FAILED";
+    RPCErrors[RPCErrors["WRONG_PASSWORD"] = 4] = "WRONG_PASSWORD";
 })(RPCErrors || (RPCErrors = {}));
 class TagAuth {
-    constructor(keyProvider, rpc) {
-        this.keyProvider = keyProvider;
-        this.rpc = rpc;
+    constructor(options) {
+        this.options = options;
+        this.keyProvider = options.keyProvider;
+        this.rpc = options.rpc;
         this.rpc.bind("auth", this.Authenticate.bind(this));
+        this.rpc.bind("init", this.InitializeKey.bind(this));
     }
     // Exchanges data with remote tag
     TagTransceive(buf) {
@@ -31,32 +35,53 @@ class TagAuth {
             return Buffer.from(result, 'hex');
         });
     }
-    Authenticate(args) {
+    // Identifies tag based on taginfo and returns new tag object
+    GetTag(tagInfoRPC) {
+        // Parse arguments
+        const taginfo = {
+            ATQA: tagInfoRPC.ATQA,
+            SAK: tagInfoRPC.SAK,
+            UID: Buffer.from(tagInfoRPC.UID, 'hex'),
+            ATS: Buffer.from(tagInfoRPC.ATS, 'hex')
+        };
+        var TagClass;
+        try {
+            TagClass = TagFactory_1.TagFactory.Identify(taginfo);
+        }
+        catch (e) {
+            throw new Defines_1.RPCMethodError(RPCErrors.UNSUPPORTED_TAG_TYPE, "Unsupported tag type");
+        }
+        // Initialize tag
+        return new TagClass(taginfo, (buf) => this.TagTransceive(buf));
+    }
+    Authenticate(tagInfo) {
         return __awaiter(this, void 0, void 0, function* () {
-            Log_1.Log.debug("TagAuth::Authenticate()", args);
-            const taginfo = {
-                ATQA: args.ATQA,
-                SAK: args.SAK,
-                UID: Buffer.from(args.UID, 'hex'),
-                ATS: Buffer.from(args.ATS, 'hex')
-            };
-            var TagClass;
-            try {
-                TagClass = TagFactory_1.TagFactory.Identify(taginfo);
-            }
-            catch (e) {
-                Log_1.Log.error("TagAuth::Authenticate(): Identify failed.");
-                throw new Defines_1.RPCMethodError(RPCErrors.UNSUPPORTED_TAG_TYPE, "Unsupported tag type");
-            }
-            // Initialize tag
-            var tag = new TagClass(taginfo, (buf) => this.TagTransceive(buf));
+            Log_1.Log.debug("TagAuth::Authenticate()", tagInfo);
+            let tag = this.GetTag(tagInfo);
             // Authenticate
             try {
                 var res = yield tag.Authenticate(this.keyProvider);
             }
             catch (e) {
                 Log_1.Log.error(`TagAuth::Authenticate(): Authentication error: ${e.message}`, e);
-                throw new Defines_1.RPCMethodError(RPCErrors.ERROR_AUTHENTICATING, `Error authenticating: ${e.message}`);
+                throw new Defines_1.RPCMethodError(RPCErrors.AUTHENTICATE_FAILED, `Error authenticating: ${e.message}`);
+            }
+            return res;
+        });
+    }
+    InitializeKey(tagInfo, pass) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Check password for this method
+            if (pass !== this.options.initilizationPass)
+                throw new Defines_1.RPCMethodError(RPCErrors.WRONG_PASSWORD, 'Wrong initialization password');
+            let tag = this.GetTag(tagInfo);
+            // Initialize key
+            try {
+                var res = yield tag.InitializeKey(this.keyProvider);
+            }
+            catch (e) {
+                Log_1.Log.error(`TagAuth::InitializeKey(): error: ${e.message}`, e);
+                throw new Defines_1.RPCMethodError(RPCErrors.INITIALIZE_KEY_FAILED, e.message);
             }
             return res;
         });

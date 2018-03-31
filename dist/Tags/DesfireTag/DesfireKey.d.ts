@@ -44,6 +44,6 @@ declare class DesfireKey2K3DESDefault extends DesfireKey2K3DES {
 declare class DesfireKey3K3DES extends DesfireKeyGeneric {
     constructor(key?: Buffer, version?: number);
     GetAuthCmd(): number;
-    GetSessionKey(RndA: Buffer, RndB: Buffer): DesfireKey2K3DES;
+    GetSessionKey(RndA: Buffer, RndB: Buffer): DesfireKey3K3DES;
 }
 export { DesfireKey, DesfireKeyGeneric, DesfireKeyAES, DesfireKey2K3DES, DesfireKey2K3DESDefault, DesfireKey3K3DES };

@@ -24,10 +24,17 @@ wss.on('connection', (ws: WebSocket) => {
     // Handle error
     node.on('error', (e) => {
         Log.error("Internal JSONRPC Error", e);
-    })
+    });
+    ws.on('error', (e) => {
+        Log.error("WebSocket Error", e);
+    });
 
     // Initialise tag authentication
-    let tagAuth = new TagAuth(keyProvider, node);
+    let tagAuth = new TagAuth({
+        keyProvider,
+        rpc: node,
+        initilizationPass: "pass123"
+    });
 });
 
 process.on('unhandledRejection', (reason, p) => {

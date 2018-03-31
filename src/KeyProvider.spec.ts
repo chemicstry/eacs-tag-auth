@@ -13,7 +13,7 @@ describe('ConstantKeyProvider', () => {
 });
 
 describe('HKDF KeyProvider', () => {
-    it('Should provide a valid OKM', () => {
+    it('Should provide a valid OKM when given known data', () => {
         // Data provided by https://tools.ietf.org/html/rfc5869
         let IKM = Buffer.from('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex');
         let salt = Buffer.from('000102030405060708090a0b0c', 'hex');
@@ -24,5 +24,13 @@ describe('HKDF KeyProvider', () => {
         let result = hkdf.GetKey(OKM.length, info);
 
         expect(result).to.deep.equal(OKM);
+    });
+
+    it('Should generate an empty salt when not given', () => {
+        // Data provided by https://tools.ietf.org/html/rfc5869
+        let IKM = Buffer.from('0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b', 'hex');
+        let hkdf = new HKDF(IKM, 'sha256');
+
+        expect(hkdf.salt).to.deep.equal(Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex'));
     });
 });

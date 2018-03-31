@@ -12,7 +12,9 @@ declare class DesfireTag extends Tag {
     Connect(): Promise<boolean>;
     DesfireAuthenticate(key: DesfireKey, keyno?: number): Promise<boolean>;
     ChangeKey(keyno: number, key: DesfireKey): Promise<boolean>;
+    CreateOtherInfo(): Buffer;
     Authenticate(keyProvider: KeyProvider): Promise<boolean>;
+    InitializeKey(keyProvider: KeyProvider): Promise<boolean>;
     static DesfireCRC(crc: number, value: number): number;
 }
 export default DesfireTag;

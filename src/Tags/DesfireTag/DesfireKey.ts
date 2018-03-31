@@ -42,10 +42,12 @@ class DesfireKeyGeneric implements DesfireKey
         return this.Ver;
     }
 
+    /* istanbul ignore next */
     GetAuthCmd() {
         return 0x00;
     }
 
+    /* istanbul ignore next */
     GetSessionKey(RndA: Buffer, RndB: Buffer) {
         return new DesfireKeyGeneric();
     }
@@ -167,9 +169,11 @@ class DesfireKey3K3DES extends DesfireKeyGeneric
         let i = 0;
         i += RndA.copy(buf, i, 0, 4);
         i += RndB.copy(buf, i, 0, 4);
-        i += RndA.copy(buf, i, 4, 8);
-        i += RndB.copy(buf, i, 4, 8);
-        return new DesfireKey2K3DES(buf);
+        i += RndA.copy(buf, i, 6, 10);
+        i += RndB.copy(buf, i, 6, 10);
+        i += RndA.copy(buf, i, 12, 16);
+        i += RndB.copy(buf, i, 12, 16);
+        return new DesfireKey3K3DES(buf);
     }
 };
 
