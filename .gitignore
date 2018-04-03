@@ -59,3 +59,6 @@ typings/
 
 # next.js build output
 .next
+
+# JWT public key
+jwt.pem

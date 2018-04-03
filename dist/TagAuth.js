@@ -26,6 +26,14 @@ class TagAuth {
         this.rpc.bind("auth", this.Authenticate.bind(this));
         this.rpc.bind("init", this.InitializeKey.bind(this));
     }
+    hasPermission(perm) {
+        let token = this.options.token;
+        if (!token)
+            return false;
+        if (!(token.permissions instanceof Array))
+            return false;
+        return token.permissions.includes(perm);
+    }
     // Exchanges data with remote tag
     TagTransceive(buf) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -72,7 +80,7 @@ class TagAuth {
     InitializeKey(tagInfo, pass) {
         return __awaiter(this, void 0, void 0, function* () {
             // Check password for this method
-            if (pass !== this.options.initilizationPass)
+            if (!this.hasPermission("eacs-tag-auth:initializekey"))
                 throw new Defines_1.RPCMethodError(RPCErrors.WRONG_PASSWORD, 'Wrong initialization password');
             let tag = this.GetTag(tagInfo);
             // Initialize key

@@ -6,19 +6,71 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const commandLineArgs = require("command-line-args");
+const commandLineUsage = require("command-line-usage");
 const WebSocket = __importStar(require("ws"));
-const Log_1 = require("./Log");
+const fs_1 = require("fs");
 const modular_json_rpc_1 = require("modular-json-rpc");
+const Log_1 = require("./Log");
 const TagAuth_1 = require("./TagAuth");
 const KeyProvider_1 = require("./KeyProvider");
-const wss = new WebSocket.Server({ port: 3000 });
+const options_1 = __importDefault(require("./options"));
+const jwt = __importStar(require("jsonwebtoken"));
+// Options
+const options = commandLineArgs(options_1.default);
+// Print usage
+if (options.help) {
+    const sections = [
+        {
+            header: 'eacs-tag-auth',
+            content: 'Extensible Access Control System. RFID Tag Authentication Module.'
+        },
+        {
+            header: 'Options',
+            optionList: options_1.default
+        }
+    ];
+    console.log(commandLineUsage(sections));
+    process.exit();
+}
 // Initial keying material used to derive keys
-const IKM = Buffer.from('00102030405060708090A0B0B0A09080', 'hex');
+const IKM = Buffer.from(options.hkdf_ikm, 'hex');
 // HKDF key provider
-const keyProvider = new KeyProvider_1.HKDF(IKM, 'sha256', Buffer.from('RFIDService'));
-wss.on('connection', (ws) => {
-    Log_1.Log.info("index: New websocket connection");
+const keyProvider = new KeyProvider_1.HKDF(IKM, 'sha256', Buffer.from(options.hkdf_salt));
+// Load JWT public key
+const jwtPublicKey = fs_1.readFileSync(options.jwtPublicKey);
+// Setup websocket server
+const wss = new WebSocket.Server({
+    host: options.host,
+    port: options.port,
+    // Authorises client using JWT
+    verifyClient: (info, cb) => {
+        let token = info.req.headers.token;
+        if (token) {
+            jwt.verify(token, jwtPublicKey, (err, decoded) => {
+                if (err) {
+                    Log_1.Log.error(`JWT verification failed for ${info.req.connection.remoteAddress}`);
+                    cb(false, 401, 'Unauthorized');
+                }
+                else {
+                    // Hack typescript to insert additional data
+                    info.req.token = decoded;
+                    cb(true);
+                }
+            });
+        }
+        else {
+            Log_1.Log.error(`Token not found for ${info.req.connection.remoteAddress}`);
+            cb(false, 401, 'Unauthorized');
+        }
+    }
+});
+wss.on('connection', (ws, req) => {
+    Log_1.Log.info(`index: New websocket connection from ${req.connection.remoteAddress}`);
     // Create RPC transport over websocket
     let transport = new modular_json_rpc_1.WSTransport(ws);
     // Create bidirectional RPC connection
@@ -34,7 +86,7 @@ wss.on('connection', (ws) => {
     let tagAuth = new TagAuth_1.TagAuth({
         keyProvider,
         rpc: node,
-        initilizationPass: "pass123"
+        token: req.token
     });
 });
 process.on('unhandledRejection', (reason, p) => {

@@ -10,7 +10,7 @@ enum RPCErrors
     UNSUPPORTED_TAG_TYPE                = 1,
     AUTHENTICATE_FAILED                 = 2,
     INITIALIZE_KEY_FAILED               = 3,
-    WRONG_PASSWORD                      = 4,
+    ACCESS_DENIED                       = 4,
 }
 
 interface TagAuthOptions
@@ -19,8 +19,8 @@ interface TagAuthOptions
     keyProvider: KeyProvider;
     // Communications
     rpc: RPCNode;
-    // Key initialization is unsafe (keys are exposed) and must be protected
-    initilizationPass: string;
+    // Peer token
+    token: any;
 }
 
 class TagAuth
@@ -37,6 +37,19 @@ class TagAuth
 
         this.rpc.bind("auth", this.Authenticate.bind(this));
         this.rpc.bind("init", this.InitializeKey.bind(this));
+    }
+
+    hasPermission(perm: string): boolean
+    {
+        let token = this.options.token;
+
+        if (!token)
+            return false;
+        
+        if (!(token.permissions instanceof Array))
+            return false;
+        
+        return token.permissions.includes(perm);
     }
 
     // Exchanges data with remote tag
@@ -92,8 +105,8 @@ class TagAuth
     async InitializeKey(tagInfo: any, pass: string): Promise<boolean>
     {
         // Check password for this method
-        if (pass !== this.options.initilizationPass)
-            throw new RPCMethodError(RPCErrors.WRONG_PASSWORD, 'Wrong initialization password');
+        if (!this.hasPermission("eacs-tag-auth:initializekey"))
+            throw new RPCMethodError(RPCErrors.ACCESS_DENIED, 'No permission to call InitializeKey');
 
         let tag = this.GetTag(tagInfo);
 

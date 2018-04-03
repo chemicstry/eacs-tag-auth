@@ -5,13 +5,14 @@ import { KeyProvider } from './KeyProvider';
 interface TagAuthOptions {
     keyProvider: KeyProvider;
     rpc: RPCNode;
-    initilizationPass: string;
+    token: any;
 }
 declare class TagAuth {
     options: TagAuthOptions;
     keyProvider: KeyProvider;
     rpc: RPCNode;
     constructor(options: TagAuthOptions);
+    hasPermission(perm: string): boolean;
     TagTransceive(buf: Buffer): Promise<Buffer>;
     GetTag(tagInfoRPC: any): Tag;
     Authenticate(tagInfo: any): Promise<boolean>;
