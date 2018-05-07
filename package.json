@@ -73,6 +73,7 @@
   "dependencies": {
     "command-line-args": "^5.0.2",
     "command-line-usage": "^5.0.4",
+    "eacs-socket": "^1.0.0",
     "jsonwebtoken": "^8.2.0",
     "modular-json-rpc": "^1.0.6",
     "winston": "^2.4.0",

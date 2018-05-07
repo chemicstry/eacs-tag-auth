@@ -1,14 +1,15 @@
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
+import optionDefinitions from './options';
 import * as WebSocket from 'ws';
+import { EACSSocket, EACSToken } from 'eacs-socket';
 import { readFileSync } from 'fs';
 import { IncomingMessage } from 'http';
 import { WSTransport, RPCNode } from 'modular-json-rpc';
 import { Log } from './Log';
 import { TagAuth } from './TagAuth';
 import { HKDF } from './KeyProvider';
-import optionDefinitions from './options';
-import * as jwt from 'jsonwebtoken';
+
 
 // Options
 const options = commandLineArgs(optionDefinitions);
@@ -38,35 +39,19 @@ const IKM = Buffer.from(options.hkdf_ikm, 'hex');
 const keyProvider = new HKDF(IKM, 'sha256', Buffer.from(options.hkdf_salt));
 
 // Load JWT public key
-const jwtPublicKey = readFileSync(options.jwtPublicKey);
+const jwtPublicKey: string = readFileSync(options.jwtPublicKey, "utf8");
 
-// Setup websocket server
-const wss = new WebSocket.Server({
+// Setup EACSSocket (websockets with JWT auth)
+const socket = new EACSSocket({
     host: options.host,
     port: options.port,
-    // Authorises client using JWT
-    verifyClient: (info, cb) => {
-        let token = info.req.headers.token;
-        if (token) {
-            jwt.verify(<string>token, jwtPublicKey, (err, decoded) => {
-                if (err) {
-                    Log.error(`JWT verification failed for ${info.req.connection.remoteAddress}`);
-                    cb(false, 401, 'Unauthorized');
-                } else {
-                    // Hack typescript to insert additional data
-                    (<any>info.req).token = decoded;
-                    cb(true);
-                }
-            });
-        } else {
-            Log.error(`Token not found for ${info.req.connection.remoteAddress}`);
-            cb(false, 401, 'Unauthorized');
-        }
-    }
+    jwtPubKey: jwtPublicKey
 });
 
-wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-    Log.info(`index: New websocket connection from ${req.connection.remoteAddress}`);
+socket.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    let token = <EACSToken>(<any>req).token;
+
+    Log.info(`index: New connection from ${req.connection.remoteAddress}. Identifier: ${token.identifier}`);
 
     // Create RPC transport over websocket
     let transport = new WSTransport(ws);
@@ -86,7 +71,7 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     let tagAuth = new TagAuth({
         keyProvider,
         rpc: node,
-        token: (<any>req).token
+        token: token
     });
 });
 

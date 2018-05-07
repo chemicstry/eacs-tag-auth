@@ -4,6 +4,7 @@ import { Tag, TagInfo, TagConstructor } from './Tag';
 import { TagFactory } from './TagFactory';
 import { KeyProvider } from './KeyProvider';
 import { Log } from './Log';
+import { EACSToken } from 'eacs-socket';
 
 enum RPCErrors
 {
@@ -20,12 +21,13 @@ interface TagAuthOptions
     // Communications
     rpc: RPCNode;
     // Peer token
-    token: any;
+    token: EACSToken;
 }
 
 class TagAuth
 {
     options: TagAuthOptions;
+    token: EACSToken;
     keyProvider: KeyProvider;
     rpc: RPCNode;
 
@@ -34,22 +36,10 @@ class TagAuth
         this.options = options;
         this.keyProvider = options.keyProvider;
         this.rpc = options.rpc;
+        this.token = options.token;
 
         this.rpc.bind("auth", this.Authenticate.bind(this));
         this.rpc.bind("init", this.InitializeKey.bind(this));
-    }
-
-    hasPermission(perm: string): boolean
-    {
-        let token = this.options.token;
-
-        if (!token)
-            return false;
-        
-        if (!(token.permissions instanceof Array))
-            return false;
-        
-        return token.permissions.includes(perm);
     }
 
     // Exchanges data with remote tag
@@ -105,7 +95,7 @@ class TagAuth
     async InitializeKey(tagInfo: any, pass: string): Promise<boolean>
     {
         // Check password for this method
-        if (!this.hasPermission("eacs-tag-auth:initializekey"))
+        if (!this.token.hasPermission("eacs-tag-auth:initializekey"))
             throw new RPCMethodError(RPCErrors.ACCESS_DENIED, 'No permission to call InitializeKey');
 
         let tag = this.GetTag(tagInfo);
