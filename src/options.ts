@@ -17,7 +17,7 @@ export default [
         name: 'tls_cert',
         type: String,
         defaultValue: 'tls_cert.pem',
-        description: 'TLS certificate file'
+        description: 'TLS certificate file (leave blank to disable TLS)'
     },
     {
         name: 'tls_key',
