@@ -9,6 +9,7 @@ import { WSTransport, RPCNode } from 'modular-json-rpc';
 import { Log } from './Log';
 import { TagAuth } from './TagAuth';
 import { HKDF } from './KeyProvider';
+import * as https from 'https';
 
 
 // Options
@@ -42,11 +43,28 @@ const keyProvider = new HKDF(IKM, 'sha256', Buffer.from(options.hkdf_salt));
 const jwtPublicKey: string = readFileSync(options.jwtPublicKey, "utf8");
 
 // Setup EACSSocket (websockets with JWT auth)
-const socket = new EACSSocket({
-    host: options.host,
-    port: options.port,
-    jwtPubKey: jwtPublicKey
-});
+if (options.tls_cert.length)
+{
+    // With TLS
+    var server = https.createServer({
+        cert: readFileSync(options.tls_cert),
+        key: readFileSync(options.tls_key)
+    }).listen(options.port, options.host);
+
+    var socket = new EACSSocket({
+        jwtPubKey: jwtPublicKey,
+        server
+    });
+}
+else
+{
+    // Without TLS
+    var socket = new EACSSocket({
+        host: options.host,
+        port: options.port,
+        jwtPubKey: jwtPublicKey
+    });
+}
 
 socket.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     let token = <EACSToken>(<any>req).token;
@@ -71,7 +89,7 @@ socket.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     let tagAuth = new TagAuth({
         keyProvider,
         rpc: node,
-        token: token
+        token
     });
 });
 
