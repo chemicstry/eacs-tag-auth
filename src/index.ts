@@ -13,7 +13,7 @@ import * as https from 'https';
 
 
 // Options
-const options = commandLineArgs(optionDefinitions);
+const options = commandLineArgs(<commandLineUsage.OptionDefinition[]>optionDefinitions);
 
 // Print usage
 if (options.help)

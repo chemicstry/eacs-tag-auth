@@ -1,13 +1,28 @@
-language : node_js
+language: node_js
 
-node_js :
- - stable
+node_js:
+- stable
 
 install:
- - npm install
+- npm install
 
 script:
- - npm run cover
+- npm run cover
 
-# Send coverage data to Coveralls
-after_script: "cat coverage/lcov.info | node_modules/coveralls/bin/coveralls.js"
+after_script: cat coverage/lcov.info | node_modules/coveralls/bin/coveralls.js
+
+after_success:
+  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+  - export REPO=sebestblog/travis-demo
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+  - docker build -f Dockerfile -t $REPO:$COMMIT .
+  - docker tag $REPO:$COMMIT $REPO:$TAG
+  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+  - docker push $REPO
+
+env:
+  global:
+  - secure: CFOZMdHkvWkPbQQ8dSVBfi3irJhJ4UU/izgFJlQi6NG1Hg9fWWZrepJ79RodRSf+kmMWpKH3ZBN3u4S2REPVxcPsyMKbZ/47r6hcwqrlZxW4/wy9q6+fi/TdktUCKx3JNr6c61Nl1wxzUN2ctzR2nBmCrqdTIxn+9+ZvzmQqc37uDFRBgGnRialN1qNUNA55tiCqCe8/rWdSUzLhJTLcaeRbTZikVfOs91h5zgbHclCfPNXwMkDuF2SAD/j4QxeKjoIacvCbV8lR4l7F853PAGH0tt0nRuDB3tBlFzoI4Y8vAb4S2dsw8VrGFVFTnsiWLMvEW6XEtkO91Qz2hxf2vv/GzDN/wZ3F8uvGP/V+QNurxned4iqJf0+Hvbj2qoaWULhST0vsSdKi6mdBdv559aPVKD54huO02SOScUISdQV1aUNbAVXu/3qFF1ebRxlTaeudPDkZwMvKrj9ttQ1f/Qy4Pmq4tnpsQtZNYlCuoj6M7ZGFkY82AY3PGyJmY/O4ctnF8ZcGsllf2aXgxB/ykyjaWDASPaL9mc4O6bU+GnHZiMtqMDI6qMB7vDQEXJ3omF6O9YCQxoyfR5gJQxJnCrIgE0aMqDHFQ8NTjFrT2oG77rjVZrwqhFevKnqEdVJTFZ4Vb5WtORHnbAWUDmGOcg85ddeg03+hDvWD6AxqMmg=
+  - secure: hxYAst0rHYGAtq5/GVKOzqwWz/6XKCQlE/+xCLIWrDBjUWfDaytcgD1bjexQqW2L2Q5gqzUI/dzx66XgaXlI2LD4f5V3SPNK6uXWxknVxo5Op6zJn6BIjHy+WfbWHLH+rY1N5eIKUMmIelbvehr50zvxVm9UUfRtOodfRD7H9gzmzgXPQUWz5LA4NocJX0L0GQ4s6+Hb/FIV9mBTrM+nITk0wg/Uc6+GV3Yw709jV30CmwEPWLxz/1wLRRHfD3IFptnk/n7XeNpeb6b8yOGMjXe6EpynOqAAUDl4eillt7ZZ644aenTD3JHtxKm+cB7NJKQRwOAhcBheBEjIfMfmubAxYkVmioFT2l7M7AVnj0jTsL2y1ZL14u9nZjmXDTMhtkMf9xKsa9VgWOEEcH0oA2l4WNw18xPVg+6Celq/dbA3aFNsmA3vNwkNpcST6bEgSbiFxx1UJTRXpKbEEvyTX+lHik6mHanCUHS7SKru8y1JNzu/XQYCV6O32ODeHVaPWnjKlS+NDQ2mbLWoDjceSGBJkeRzJM61UtYGUD5EdCm7z2v6QTpWJTE/znDlnsbBNj0oExco/x4w0BNB0K78n+xdMFzPaHSQjNcRA0ulYA1WIl2KT42xuoFduQ1Lk2tPigF8WWm2al8abUf0DvQwWcnyNt1I9a+JVyD+BXT952E=
+  - secure: g2G+wt3hl9AYA1x262p1lsiV1tHAWcJWv8UHe+VWf9oxpYZ1xI9jpPG8JEEjTL45UkRlfumM6REYLnhCcMgXGC6Sr2n2ldM30uMOmsJ0BEBN/XBNITygpKcwXGxSozML/g/q1b+IoM6roOxVyYBsjl8ATW3NMPhs0rcUXRCKK3JZDVAyVsBcHQpy4504mZwS/nA9nC9+fcn91pf2meSIFduXP1n91Mv1w3hCCQzNn2xJaJfD8cokkomDAeznHK0D1Qb3Z54OHf6cTW8fuUgJYwAYxSyOe/GCj/QWlZ3JbxQr3rWHd42p3p/cvEBzFtQ7WtZGNJGXQgR1HtbHyQ9CWGl0MScqz0R8UfWc+t2B7a2v14vScRKOzrQg9b2HQiY97oeMCsrzGjTbf1OCP61m6CbejmdYyeBAp8sHADdRJLwFO6n2AiwyQrYDCr1YGXzp2CMLWYEn76e1mSuS/PjO7/wc4wba/BFZ7TvwHaX2JuGxg9yPmOmy9ccDwQ+EeBsGvw8RLLcGUp0Lkksh552sAFhw0P/aZbY8SBMbPFJB0NRX1TBQVKMcT4lEsoatFERF1+VZEhfUYp30fbcDYHjp9j9UNKmB8axTEyzWm+gpFLarXgL/Q/g8lFBH1Ydhyg5ddI3e4dF6PDGjrug9WfjAoM7nJNjY4VZ17ZBWz2n3Oq0=
+  - COMMIT=${TRAVIS_COMMIT::8}

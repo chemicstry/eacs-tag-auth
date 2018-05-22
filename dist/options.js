@@ -16,6 +16,18 @@ exports.default = [
         description: 'Host (IP) of websocket'
     },
     {
+        name: 'tls_cert',
+        type: String,
+        defaultValue: 'tls_cert.pem',
+        description: 'TLS certificate file (leave blank to disable TLS)'
+    },
+    {
+        name: 'tls_key',
+        type: String,
+        defaultValue: 'tls_key.pem',
+        description: 'TLS key file'
+    },
+    {
         name: 'hkdf_ikm',
         type: String,
         defaultValue: '00102030405060708090A0B0B0A09080',

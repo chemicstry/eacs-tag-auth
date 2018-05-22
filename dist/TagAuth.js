@@ -16,23 +16,16 @@ var RPCErrors;
     RPCErrors[RPCErrors["UNSUPPORTED_TAG_TYPE"] = 1] = "UNSUPPORTED_TAG_TYPE";
     RPCErrors[RPCErrors["AUTHENTICATE_FAILED"] = 2] = "AUTHENTICATE_FAILED";
     RPCErrors[RPCErrors["INITIALIZE_KEY_FAILED"] = 3] = "INITIALIZE_KEY_FAILED";
-    RPCErrors[RPCErrors["WRONG_PASSWORD"] = 4] = "WRONG_PASSWORD";
+    RPCErrors[RPCErrors["ACCESS_DENIED"] = 4] = "ACCESS_DENIED";
 })(RPCErrors || (RPCErrors = {}));
 class TagAuth {
     constructor(options) {
         this.options = options;
         this.keyProvider = options.keyProvider;
         this.rpc = options.rpc;
+        this.token = options.token;
         this.rpc.bind("auth", this.Authenticate.bind(this));
         this.rpc.bind("init", this.InitializeKey.bind(this));
-    }
-    hasPermission(perm) {
-        let token = this.options.token;
-        if (!token)
-            return false;
-        if (!(token.permissions instanceof Array))
-            return false;
-        return token.permissions.includes(perm);
     }
     // Exchanges data with remote tag
     TagTransceive(buf) {
@@ -80,8 +73,8 @@ class TagAuth {
     InitializeKey(tagInfo, pass) {
         return __awaiter(this, void 0, void 0, function* () {
             // Check password for this method
-            if (!this.hasPermission("eacs-tag-auth:initializekey"))
-                throw new Defines_1.RPCMethodError(RPCErrors.WRONG_PASSWORD, 'Wrong initialization password');
+            if (!this.token.hasPermission("eacs-tag-auth:initializekey"))
+                throw new Defines_1.RPCMethodError(RPCErrors.ACCESS_DENIED, 'No permission to call InitializeKey');
             let tag = this.GetTag(tagInfo);
             // Initialize key
             try {
