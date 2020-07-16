@@ -1,3 +1,5 @@
+# Outdated. Replaced by AIO package [eacs-server](https://github.com/chemicstry/eacs-server)
+
 [![Build Status](https://travis-ci.org/chemicstry/eacs-tag-auth.svg?branch=master)](https://travis-ci.org/chemicstry/eacs-tag-auth)
 [![Coverage Status](https://coveralls.io/repos/github/chemicstry/eacs-tag-auth/badge.svg?branch=master)](https://coveralls.io/github/chemicstry/eacs-tag-auth?branch=master)
 
